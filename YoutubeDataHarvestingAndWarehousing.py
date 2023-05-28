@@ -290,3 +290,60 @@ youtube_data = {**channel_info, **video_info}
 # Convert the dictionary to JSON format and print it
 youtube_json = json.dumps(youtube_data, indent=4)
 print(youtube_json)
+
+
+
+# Import Streamlit and other modules
+import streamlit as st
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Load the data from JSON file
+with open('data.json') as f:
+    data = pd.read_json(f)
+
+# Display the title and some text
+st.title('youtube_data')
+
+
+# Display the data as a dataframe and a table
+st.subheader('Dataframe')
+st.dataframe(data)
+st.subheader('Table')
+st.table(data)
+
+# Display a metric with a delta indicator
+st.subheader('Metric')
+st.metric('Average Rating', np.mean(data['rating']), 0.1)
+
+# Display the JSON data
+st.subheader('JSON')
+st.json(data.to_dict())
+
+# Display a line chart using matplotlib
+st.subheader('Line Chart')
+fig, ax = plt.subplots()
+ax.plot(data['rating'], label='Rating')
+ax.set_xlabel('Index')
+ax.set_ylabel('Rating')
+ax.legend()
+st.pyplot(fig)
+
+# Display a bar chart using Streamlit
+st.subheader('Bar Chart')
+st.bar_chart(data['rating'])
+
+# Display a map using Streamlit
+st.subheader('Map')
+st.map(data[['lat', 'lon']])
+
+# Create a sidebar with widgets for user input
+st.sidebar.title('Options')
+site = st.sidebar.selectbox('Select a site', ['site1', 'site2'])
+is_vip = st.sidebar.checkbox('Show only VIP customers')
+
+# Filter the data based on user input and display it as a table
+st.subheader(f'Filtered Data for {site}')
+filtered_data = data[(data['site'] == site) & (data['is_vip'] == is_vip)]
+st.table(filtered_data)
