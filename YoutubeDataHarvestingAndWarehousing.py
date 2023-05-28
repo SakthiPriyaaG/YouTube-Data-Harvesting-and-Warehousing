@@ -9,7 +9,7 @@ import requests
 
 
 # Define the API key and the channel ID
-api_key = "AIzaSyA79XBlkzuMdQsoA74g4TmjdQwnTRmWdxA"
+api_key = "please enter ur api key"
 channel_id = "UC1234567890"
 
 # Define the base URL for the YouTube Data API
