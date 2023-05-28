@@ -1,217 +1,292 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[ ]:
-
-
 from googleapiclient.discovery import build
-from pymongo import MongoClient
-
+import seaborn as sns
+import streamlit as st
+import pymongo
 import pandas as pd
+import json
+import requests
 
 
-# In[ ]:
 
+# Define the API key and the channel ID
+api_key = "AIzaSyA79XBlkzuMdQsoA74g4TmjdQwnTRmWdxA"
+channel_id = "UC1234567890"
 
-api_key = 'AIzaSyA79XBlkzuMdQsoA74g4TmjdQwnTRmWdxA'
-channel_ids = ['UCnz-ZXXER4jOvuED5trXfEA', # techTFQ
-               'UCLLw7jmFsvfIVaUFsLs8mlQ', # Luke Barousse 
-               'UCiT9RITQ9PW6BhXK0y2jaeg', # Ken Jee
-               'UC7cs8q-gJRlGwj4A8OmCmXg', # Alex the analyst
-               'UC2UXDak6o7rBm23k3Vv5dww' # Tina Huang
-              ]
+# Define the base URL for the YouTube Data API
+base_url = "https://www.googleapis.com/youtube/v3/"
 
-youtube = build('youtube', 'v3', developerKey=api_key)
+# Define the parameters for the channel request
+channel_params = {
+    "part": "snippet,statistics",
+    "id": channel_id,
+    "key": api_key
+}
 
+# Make the channel request and get the response
+channel_response = requests.get(base_url + "channels", params=channel_params)
+channel_data = channel_response.json()
 
-# ## statistics##
+# Extract the channel information
+channel_name = channel_data["items"][0]["snippet"]["title"]
+channel_description = channel_data["items"][0]["snippet"]["description"]
+subscription_count = channel_data["items"][0]["statistics"]["subscriberCount"]
+channel_views = channel_data["items"][0]["statistics"]["viewCount"]
+playlist_id = channel_data["items"][0]["contentDetails"]["relatedPlaylists"]["uploads"]
 
-# In[ ]:
+# Define the parameters for the playlist request
+playlist_params = {
+    "part": "snippet",
+    "playlistId": playlist_id,
+    "key": api_key,
+    "maxResults": 50 # Change this as per your need
+}
 
+# Make the playlist request and get the response
+playlist_response = requests.get(base_url + "playlistItems", params=playlist_params)
+playlist_data = playlist_response.json()
 
-def get_channel_stats(youtube, channel_ids):
-    all_data = []
-    request = youtube.channels().list(
-                part='snippet,contentDetails,statistics',
-                id=','.join(channel_ids))
-    response = request.execute() 
+# Initialize an empty dictionary to store the video information
+video_info = {}
+
+# Loop through the playlist items and extract the video information
+for item in playlist_data["items"]:
+    # Get the video ID and title
+    video_id = item["snippet"]["resourceId"]["videoId"]
+    video_name = item["snippet"]["title"]
+
+    # Define the parameters for the video request
+    video_params = {
+        "part": "snippet,statistics,contentDetails",
+        "id": video_id,
+        "key": api_key
+    }
+
+    # Make the video request and get the response
+    video_response = requests.get(base_url + "videos", params=video_params)
+    video_data = video_response.json()
+
+    # Extract the video information
+    video_description = video_data["items"][0]["snippet"]["description"]
+    tags = video_data["items"][0]["snippet"]["tags"]
+    published_at = video_data["items"][0]["snippet"]["publishedAt"]
+    view_count = video_data["items"][0]["statistics"]["viewCount"]
+    like_count = video_data["items"][0]["statistics"]["likeCount"]
+    dislike_count = video_data["items"][0]["statistics"]["dislikeCount"]
+    favorite_count = video_data["items"][0]["statistics"]["favoriteCount"]
+    comment_count = video_data["items"][0]["statistics"]["commentCount"]
+    duration = video_data["items"][0]["contentDetails"]["duration"]
+    thumbnail = video_data["items"][0]["snippet"]["thumbnails"]["default"]["url"]
+    caption_status = video_data["items"][0]["contentDetails"]["caption"]
+
+    # Define the parameters for the comment request
+    comment_params = {
+        "part": "snippet",
+        "videoId": video_id,
+        "key": api_key,
+        "maxResults": 50 # Change this as per your need
+    }
+
+    # Make the comment request and get the response
+    comment_response = requests.get(base_url + "commentThreads", params=comment_params)
+    comment_data = comment_response.json()
+
+    # Initialize an empty dictionary to store the comments
+    comments = {}
+
+    # Loop through the comment items and extract the comments
+    for comment in comment_data["items"]:
+        # Get the comment ID and text
+        comment_id = comment["id"]
+        comment_text = comment["snippet"]["topLevelComment"]["snippet"]["textDisplay"]
+
+        # Get the comment author and published date
+        comment_author = comment["snippet"]["topLevelComment"]["snippet"]["authorDisplayName"]
+        comment_published_at = comment["snippet"]["topLevelComment"]["snippet"]["publishedAt"]
+
+        # Store the comment information in a dictionary with comment ID as key
+        comments[comment_id] = {
+            "Comment_Id": comment_id,
+            "Comment_Text": comment_text,
+            "Comment_Author": comment_author,
+            "Comment_PublishedAt": comment_published_at
+        }
+
     
-    for i in range(len(response['items'])):
-        data = dict(Channel_name = response['items'][i]['snippet']['title'],
-                    Subscribers = response['items'][i]['statistics']['subscriberCount'],
-                    Views = response['items'][i]['statistics']['viewCount'],
-                    Total_videos = response['items'][i]['statistics']['videoCount'],
-                    playlist_id = response['items'][i]['contentDetails']['relatedPlaylists']['uploads'])
-        all_data.append(data)
+    # Store the video information in a dictionary with video ID as key
+    video_info[video_id] = {
+        "Video_Id": video_id,
+        "Video_Name": video_name,
+        "Video_Description": video_description,
+        "Tags": tags,
+        "PublishedAt": published_at,
+        "View_Count": view_count,
+        "Like_Count": like_count,
+        "Dislike_Count": dislike_count,
+        "Favorite_Count": favorite_count,
+        "Comment_Count": comment_count,
+        "Duration": duration,
+        "Thumbnail": thumbnail,
+        "Caption_Status": caption_status,
+        "Comments": comments
+    }
+
+# Store the channel information in a dictionary with channel name as key
+channel_info = {
+    channel_name: {
+        "Channel_Name": channel_name,
+        "Channel_Id": channel_id,
+        "Subscription_Count": subscription_count,
+        "Channel_Views": channel_views,
+        "Channel_Description": channel_description,
+        "Playlist_Id": playlist_id
+    }
+}
+
+# Merge the channel and video information into one dictionary
+youtube_data = {**channel_info, **video_info}
+
+# Convert the dictionary to JSON format and print it
+youtube_json = json.dumps(youtube_data, indent=4)
+print(youtube_json)
+
+
+# Define the API key and the channel ID
+api_key = "AIzaSyA79XBlkzuMdQsoA74g4TmjdQwnTRmWdxA"
+channel_id = "UC1234567890"
+
+# Define the base URL for the YouTube Data API
+base_url = "https://www.googleapis.com/youtube/v3/"
+
+# Define the parameters for the channel request
+channel_params = {
+    "part": "snippet,statistics",
+    "id": channel_id,
+    "key": api_key
+}
+
+# Make the channel request and get the response
+channel_response = requests.get(base_url + "channels", params=channel_params)
+channel_data = channel_response.json()
+
+# Extract the channel information
+channel_name = channel_data["items"][0]["snippet"]["title"]
+channel_description = channel_data["items"][0]["snippet"]["description"]
+subscription_count = channel_data["items"][0]["statistics"]["subscriberCount"]
+channel_views = channel_data["items"][0]["statistics"]["viewCount"]
+playlist_id = channel_data["items"][0]["contentDetails"]["relatedPlaylists"]["uploads"]
+
+# Define the parameters for the playlist request
+playlist_params = {
+    "part": "snippet",
+    "playlistId": playlist_id,
+    "key": api_key,
+    "maxResults": 50 # Change this as per your need
+}
+
+# Make the playlist request and get the response
+playlist_response = requests.get(base_url + "playlistItems", params=playlist_params)
+playlist_data = playlist_response.json()
+
+# Initialize an empty dictionary to store the video information
+video_info = {}
+
+# Loop through the playlist items and extract the video information
+for item in playlist_data["items"]:
+    # Get the video ID and title
+    video_id = item["snippet"]["resourceId"]["videoId"]
+    video_name = item["snippet"]["title"]
+
+    # Define the parameters for the video request
+    video_params = {
+        "part": "snippet,statistics,contentDetails",
+        "id": video_id,
+        "key": api_key
+    }
+
+    # Make the video request and get the response
+    video_response = requests.get(base_url + "videos", params=video_params)
+    video_data = video_response.json()
+
+    # Extract the video information
+    video_description = video_data["items"][0]["snippet"]["description"]
+    tags = video_data["items"][0]["snippet"]["tags"]
+    published_at = video_data["items"][0]["snippet"]["publishedAt"]
+    view_count = video_data["items"][0]["statistics"]["viewCount"]
+    like_count = video_data["items"][0]["statistics"]["likeCount"]
+    dislike_count = video_data["items"][0]["statistics"]["dislikeCount"]
+    favorite_count = video_data["items"][0]["statistics"]["favoriteCount"]
+    comment_count = video_data["items"][0]["statistics"]["commentCount"]
+    duration = video_data["items"][0]["contentDetails"]["duration"]
+    thumbnail = video_data["items"][0]["snippet"]["thumbnails"]["default"]["url"]
+    caption_status = video_data["items"][0]["contentDetails"]["caption"]
+
+    # Define the parameters for the comment request
+    comment_params = {
+        "part": "snippet",
+        "videoId": video_id,
+        "key": api_key,
+        "maxResults": 50 # Change this as per your need
+    }
+
+    # Make the comment request and get the response
+    comment_response = requests.get(base_url + "commentThreads", params=comment_params)
+    comment_data = comment_response.json()
+
+    # Initialize an empty dictionary to store the comments
+    comments = {}
+
+    # Loop through the comment items and extract the comments
+    for comment in comment_data["items"]:
+        # Get the comment ID and text
+        comment_id = comment["id"]
+        comment_text = comment["snippet"]["topLevelComment"]["snippet"]["textDisplay"]
+
+        # Get the comment author and published date
+        comment_author = comment["snippet"]["topLevelComment"]["snippet"]["authorDisplayName"]
+        comment_published_at = comment["snippet"]["topLevelComment"]["snippet"]["publishedAt"]
+
+        # Store the comment information in a dictionary with comment ID as key
+        comments[comment_id] = {
+            "Comment_Id": comment_id,
+            "Comment_Text": comment_text,
+            "Comment_Author": comment_author,
+            "Comment_PublishedAt": comment_published_at
+        }
+
     
-    return all_data
-
-
-# In[ ]:
-
-
-channel_statistics = get_channel_stats(youtube, channel_ids)
-
-
-# In[ ]:
-
-
-channel_data = pd.DataFrame(channel_statistics)
-
-
-# In[ ]:
-
-
-channel_data
-
-
-# In[ ]:
-
-
-playlist_id = channel_data.loc[channel_data['Channel_name']=='Ken Jee', 'playlist_id'].iloc[0]
-
-
-# In[ ]:
-
-
-def get_video_ids(youtube, playlist_id):
-    
-    request = youtube.playlistItems().list(
-                part='contentDetails',
-                playlistId = playlist_id,
-                maxResults = 50)
-    response = request.execute()
-    
-    video_ids = []
-    
-    for i in range(len(response['items'])):
-        video_ids.append(response['items'][i]['contentDetails']['videoId'])
-        
-    next_page_token = response.get('nextPageToken')
-    more_pages = True
-    
-    while more_pages:
-        if next_page_token is None:
-            more_pages = False
-        else:
-            request = youtube.playlistItems().list(
-                        part='contentDetails',
-                        playlistId = playlist_id,
-                        maxResults = 50,
-                        pageToken = next_page_token)
-            response = request.execute()
-    
-            for i in range(len(response['items'])):
-                video_ids.append(response['items'][i]['contentDetails']['videoId'])
-            
-            next_page_token = response.get('nextPageToken')
-        
-    return video_ids
-
-
-# In[ ]:
-
-
-video_ids = get_video_ids(youtube, playlist_id)
-
-
-# In[ ]:
-
-
-video_ids
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-def get_video_details(youtube, video_ids):
-    all_video_stats = []
-    
-    for i in range(0, len(video_ids), 50):
-        request = youtube.videos().list(
-                    part='snippet,statistics',
-                    id=','.join(video_ids[i:i+50]))
-        response = request.execute()
-        
-        for video in response['items']:
-            video_stats = dict(Title = video['snippet']['title'],
-                               Published_date = video['snippet']['publishedAt'],
-                               Views = video['statistics']['viewCount'],
-                               Likes = video['statistics']['likeCount'],
-                               Dislikes = video['statistics']['dislikeCount'],
-                               Comments = video['statistics']['commentCount']
-                               )
-            all_video_stats.append(video_stats)
-    
-    return all_video_stats
-
-
-# In[ ]:
-
-
-video_details = get_video_details(youtube, video_ids)
-
-
-# In[ ]:
-
-
-video_data = pd.DataFrame(video_details)
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-client = MongoClient('mongodb://localhost:27017/')
-
-
-# In[ ]:
-
-
-db = client['YT_data']
-collection = db['ytanalysis']
-
-
-# In[ ]:
-
-
-# Multiple document insertion
-data_list = video_ids
-result = collection.insert_many(data_list)
-print(f"Inserted document IDs: {result.inserted_ids}")
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
-
+    # Store the video information in a dictionary with video ID as key
+    video_info[video_id] = {
+        "Video_Id": video_id,
+        "Video_Name": video_name,
+        "Video_Description": video_description,
+        "Tags": tags,
+        "PublishedAt": published_at,
+        "View_Count": view_count,
+        "Like_Count": like_count,
+        "Dislike_Count": dislike_count,
+        "Favorite_Count": favorite_count,
+        "Comment_Count": comment_count,
+        "Duration": duration,
+        "Thumbnail": thumbnail,
+        "Caption_Status": caption_status,
+        "Comments": comments
+    }
+
+# Store the channel information in a dictionary with channel name as key
+channel_info = {
+    channel_name: {
+        "Channel_Name": channel_name,
+        "Channel_Id": channel_id,
+        "Subscription_Count": subscription_count,
+        "Channel_Views": channel_views,
+        "Channel_Description": channel_description,
+        "Playlist_Id": playlist_id
+    }
+}
+
+# Merge the channel and video information into one dictionary
+youtube_data = {**channel_info, **video_info}
+
+# Convert the dictionary to JSON format and print it
+youtube_json = json.dumps(youtube_data, indent=4)
+print(youtube_json)
