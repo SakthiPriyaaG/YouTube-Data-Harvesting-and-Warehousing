@@ -1,19 +1,38 @@
 ## YouTube-Data-Harvesting-and-Warehousing ##
 This is my intermediate level Python Project to harvest YouTube data using YouTube Data API and store the data in a MongoDB database as a data lake.After that the data is migrated from the data lake to a SQL database as tables and are displayed in the streamlit application.
 
-## STEPS TO BE FOLLOWED ##
+##Project##
 
-Install the necessary libraries: Make sure you have the required Python libraries installed, such as google-api-python-client, pymysql, pymongo, and streamlit.
+Introduction:
 
-Set up YouTube API access: Go to the Google Developers Console and create a new project. Enable the YouTube Data API and obtain API credentials (API key or OAuth client ID).
+YouTube is the world's most popular video-sharing platform, with over 2 billion active users. It is a valuable source of data for businesses, researchers, and individuals. This project will demonstrate how to harvest and warehouse YouTube data using SQL, MongoDB, and Streamlit.
 
-Retrieve YouTube data: Use the google-api-python-client library to interact with the YouTube Data API. You can fetch data such as video details, channel information, comments, etc. Refer to the YouTube Data API documentation for more details on available endpoints and parameters.
+Data Collection:
 
-Store data in MongoDB: Use the pymongo library to connect to your MongoDB database. Create a collection to store the YouTube data. You can define the structure of the document based on the data you want to store (similar to the MySQL schema). Insert the retrieved data into the MongoDB collection.
+The first step is to collect data from YouTube. This can be done using the YouTube Data API. The API provides access to a wide range of data, including channel information, video statistics, and viewer engagement metrics.
 
-Store data in MySQL: Use the pymysql library to establish a connection with your MySQL database. Create a table to store the YouTube data you want to capture. You can define the table schema based on the specific data you're interested in (e.g., video ID, title, description, view count, etc.). Insert the retrieved data into the MySQL table.
+Data Storage:
 
-Create a Streamlit application: Use the streamlit library to build a web application that allows you to interact with the harvested YouTube data. You can create a dashboard or a search functionality, for example, to query and display the stored information.
+The collected data can be stored in a variety of ways. In this project, we will use MongoDB and SQL. MongoDB is a NoSQL database that is well-suited for storing large amounts of unstructured data. SQL is a relational database that is well-suited for querying and analyzing structured data.
+
+Data Warehousing:
+
+The data can be stored in a data warehouse, which is a centralized repository for data. Data warehouses are used to store large amounts of data from a variety of sources. They can be used to analyze data, identify trends, and make predictions.
+
+Data Analysis:
+
+The data can be analyzed using a variety of tools. In this project, we will use Streamlit. Streamlit is a Python library that can be used to create interactive web applications. We will use Streamlit to create a dashboard that allows users to visualize and analyze the data.
+
+Conclusion:
+
+This project has demonstrated how to harvest and warehouse YouTube data using SQL, MongoDB, and Streamlit. This approach can be used to collect, store, and analyze data from a variety of sources.
+
+Benefits:
+
+This approach can be used to collect large amounts of data from YouTube.
+The data can be stored in a variety of ways, including MongoDB and SQL.
+The data can be analyzed using a variety of tools, including Streamlit.
+This approach can be used to identify trends, make predictions, and improve decision-making.
 
 ## Thank You ##
 ## Hope this is useful for you ##
